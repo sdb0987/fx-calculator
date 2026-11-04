@@ -58,6 +58,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .board .verdict{font-size:1.6rem;font-weight:700;margin:4px 0 2px;line-height:1.25;text-wrap:balance}
 .board .verdict b{color:var(--amber)}
 .board .why{margin:0 0 12px;color:var(--board-muted);font-size:.9rem}
+.parity{display:flex;flex-direction:column;gap:4px;margin:-4px 0 12px;font-size:.84rem;color:var(--board-muted)}
+.parity:empty{display:none}
+.parity b{color:var(--board-ink);font-weight:600}
 .rows{list-style:none;margin:0;padding:0}
 .rows li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:11px 0;border-top:1px solid var(--board-line);align-items:baseline}
 .rows .give{font-size:.92rem;min-width:0}
@@ -123,6 +126,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <p class="eyebrow" id="b-eyebrow">라오스 환전소에서 낍으로 바꿀 때</p>
     <p class="verdict" id="b-verdict">계산 중</p>
     <p class="why" id="b-why"></p>
+    <div class="parity" id="b-parity"></div>
     <ul class="rows" id="b-rows"></ul>
   </section>
 
@@ -297,7 +301,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
         var b = document.createElement("b"); b.className = "num"; b.textContent = txt; s.appendChild(b);
       });
     }
-    var rows = $("b-rows"); rows.textContent = "";
+    var rows = $("b-rows"); rows.textContent = ""; $("b-parity").textContent = "";
     var usdLak=num(S.usdLak), krwLak=num(S.krwLak), thbLak=num(S.thbLak);
     var kip=num(S.kip), pU=num(S.lakPerUsd), pK=num(S.lakPerKrw), pT=num(S.lakPerThb);
     imp("la-imp-usd", usdLak/krwLak, krwUsd, "기준 환율", "원화를 후하게 쳐주니 원화가 유리합니다.", "원화를 박하게 쳐주니 달러가 유리합니다.");
@@ -325,9 +329,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       $("b-eyebrow").textContent = "라오스 환전소에서 낍을 외화로 바꿀 때";
       if (!ok(kip, krwUsd, thbUsd, pU, pK, pT)) { plain("환율과 낍 금액을 입력하세요"); return; }
       var w = [
-        {n:"달러", got:kip/pU, unit:"달러", d:2, sub:"1달러 = "+f(pU)+"낍", won:kip/pU*krwUsd},
-        {n:"원화", got:kip/pK, unit:"원", d:0, sub:"1원 = "+f(pK,2)+"낍", won:kip/pK},
-        {n:"바트", got:kip/pT, unit:"바트", d:2, sub:"1바트 = "+f(pT,2)+"낍", won:kip/pT*thbRef}
+        {n:"달러", got:kip/pU, unit:"달러", d:2, sub:"1달러 = "+f(pU)+"낍", won:kip/pU*krwUsd, p:pU, v:krwUsd, pd:0},
+        {n:"원화", got:kip/pK, unit:"원", d:0, sub:"1원 = "+f(pK,2)+"낍", won:kip/pK, p:pK, v:1, pd:2},
+        {n:"바트", got:kip/pT, unit:"바트", d:2, sub:"1바트 = "+f(pT,2)+"낍", won:kip/pT*thbRef, p:pT, v:thbRef, pd:2}
       ];
       var wb;
       if (Math.round(w[0].won - Math.max(w[1].won,w[2].won)) >= 0) wb = 0;
@@ -335,7 +339,20 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       else wb = 2;
       var wo = w.filter(function(_,i){ return i!==wb; });
       if (wo.every(function(o){ return Math.abs(w[wb].won/o.won-1) < 0.0005; })) plain("어느 화폐든 거의 같아요", "차이가 0.05% 미만입니다.");
-      else verdict(w[wb].n, wo.map(function(o){ return o.n+"보다 "+pct(w[wb].won,o.won); }).join(", ") + " 더 가치 있어요");
+      else {
+        verdict(w[wb].n, wo.map(function(o){ return o.n+"보다 "+pct(w[wb].won,o.won); }).join(", ") + " 더 가치 있어요");
+        // 다른 화폐가 1등과 같은 가치가 되는 환전소 매도가: kip/p × v = 1등의 원화 환산액
+        var par = $("b-parity");
+        wo.forEach(function(o){
+          var pStar = kip * o.v / w[wb].won;
+          var line = document.createElement("div");
+          line.appendChild(document.createTextNode(o.n + "가 " + w[wb].n + "만큼 되려면 1" + o.unit + " = "));
+          var b = document.createElement("b"); b.className = "num"; b.textContent = f(pStar, o.pd) + "낍";
+          line.appendChild(b);
+          line.appendChild(document.createTextNode(" 이하. 지금은 " + f(o.p, o.pd) + "낍"));
+          par.appendChild(line);
+        });
+      }
       w.forEach(function(o,i){ rows.appendChild(row(o.n, f(o.got,o.d)+o.unit, o.sub, o.won, "원어치", i===wb ? "가장 많이" : "−"+((1-o.won/w[wb].won)*100).toFixed(1)+"%", i===wb)); });
     }
   }
