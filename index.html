@@ -13,7 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
 <!--/host-->
-<title>라오스·태국 환전 계산기</title>
+<title>라오스(KIP) ↔ 외화 환전 계산기</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -110,13 +110,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 <body>
 <div class="wrap">
   <header class="top">
-    <h1>라오스·태국 환전 계산기</h1>
+    <h1>라오스(KIP) ↔ 외화 환전 계산기</h1>
     <p>달러·원화·바트를 들고 갔을 때, 환전소에 무엇을 내야 현지 돈을 더 받는지 알려 줍니다.</p>
   </header>
 
   <div class="tabs" role="tablist" aria-label="나라 선택">
-    <button id="tab-la" type="button" role="tab" aria-selected="true" aria-controls="panel-la">라오스 · 낍</button>
-    <button id="tab-th" type="button" role="tab" aria-selected="false" aria-controls="panel-th">태국 · 바트</button>
+    <button id="tab-la" type="button" role="tab" aria-selected="true" aria-controls="panel-la">외화 → 라오스(KIP)</button>
+    <button id="tab-th" type="button" role="tab" aria-selected="false" aria-controls="panel-th">라오스(KIP) → 외화</button>
   </div>
 
   <section class="board" aria-live="polite">
@@ -175,6 +175,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     </div>
     <div class="implied">
       <div class="imp"><div class="k">환전소가 치는 1달러당 원화</div><div class="v num" id="th-imp-usd"></div><div class="t" id="th-imp-usd-t"></div></div>
+      <div class="imp"><div class="k">환전소가 치는 1바트당 원화</div><div class="v num" id="th-imp-thb"></div><div class="t" id="th-imp-thb-t"></div><div class="t" id="th-imp-thb-t2"></div></div>
     </div>
   </section>
 
@@ -205,7 +206,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   <ul class="notes">
     <li>환전소 환율은 자동으로 가져오지 않습니다. 기본값은 2026-11-03 라오스 BCEL 은행과 태국 Super Rich 본점 게시 환율입니다. 현지 게시판 숫자로 바꿔 넣으세요.</li>
     <li>달러는 100달러권 신권이 가장 좋은 환율을 받고, 소액권·구권은 낮게 쳐줄 수 있습니다.</li>
-    <li>입력한 값은 이 기기의 브라우저에만 저장됩니다.</li>
+    <li>입력한 값과 선택한 나라는 이 기기의 브라우저에 자동 저장되어, 다시 열면 그대로 나옵니다. 다른 기기와는 공유되지 않습니다.</li>
     <li>시장 환율: <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a>, 하루 1회 갱신</li>
   </ul>
 </div>
@@ -304,6 +305,15 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     imp("la-imp-usd", usdLak/krwLak, krwUsd, "기준 환율", "원화가 유리합니다.", "달러가 유리합니다.");
     imp("la-imp-thb", thbLak/krwLak, thbRef, "기준 바트 환율", "원화가 유리합니다.", "바트가 유리합니다.");
     imp("th-imp-usd", usdThb*krwPerThb, krwUsd, "기준 환율", "원화가 유리합니다.", "달러가 유리합니다.");
+    imp("th-imp-thb", krwPerThb, thbRef, "기준 바트 환율", "시장 환율보다 유리합니다.", "시장 환율보다 불리합니다.");
+    var t2 = $("th-imp-thb-t2"); t2.className = "t"; t2.textContent = "";
+    if (ok(krwPerThb, krwUsd, usdThb)) {
+      var viaUsd = krwUsd/usdThb, dd = Math.round((krwPerThb-viaUsd)*100);
+      var vTxt = "달러로 바꿔 내면 1바트에 " + f(viaUsd,2) + "원꼴";
+      if (dd < 0) { t2.textContent = vTxt + "이라 원화로 내는 쪽이 유리합니다."; t2.classList.add("good"); }
+      else if (dd > 0) { t2.textContent = vTxt + "이라 달러로 내는 쪽이 유리합니다."; t2.classList.add("bad"); }
+      else t2.textContent = vTxt + "으로 같아 차이가 없습니다.";
+    }
 
     if (S.tab === "la") {
       $("b-eyebrow").textContent = "라오스 환전소에서 낍으로 바꿀 때";
@@ -337,7 +347,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
   function showMarketStatus(msg, cls){
     var st = $("status"); st.className = "status" + (cls ? " "+cls : "");
-    st.textContent = msg || ("현재 값: " + S.marketSrc + (S.marketSrc === "직접 입력" ? "" : " · " + S.marketDate));
+    st.textContent = msg || ("현재 값: " + S.marketSrc + (S.marketSrc === "직접 입력" ? ". 다시 열어도 자동으로 바꾸지 않습니다." : " · " + S.marketDate));
   }
 
   function fetchMarket(manual){
@@ -376,7 +386,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   $("booth-date").textContent = "환전소 기본값: 2026-11-03";
   setTab(S.tab === "th" ? "th" : "la");
   showMarketStatus();
-  if (S.fetchedOn !== today() && navigator.onLine !== false) fetchMarket(false);
+  // 직접 입력한 시장 환율은 다시 열어도 그대로 두고, 그 외에는 하루 한 번 새 환율을 가져온다
+  if (S.marketSrc !== "직접 입력" && S.fetchedOn !== today() && navigator.onLine !== false) fetchMarket(false);
 })();
 </script>
 <!--host-->
