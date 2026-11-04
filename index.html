@@ -105,6 +105,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .foot .status{margin:0}
 
+/* 한국 환율 종류 선택표: 네이버 표처럼 종류마다 달러·바트 값을 보여 주고, 줄을 눌러 고른다 */
+.ktab{display:flex;flex-direction:column;gap:4px;margin:4px 0 6px}
+.ktab .khead,.ktab button{display:grid;grid-template-columns:minmax(0,1fr) 6.2rem 4.6rem;gap:8px;align-items:center;text-align:right}
+.ktab .khead{font-size:.74rem;color:var(--muted);padding:0 12px}
+.ktab .khead span:first-child,.ktab button span:first-child{text-align:left}
+.ktab button{font:inherit;font-size:.88rem;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+.ktab button .num{font-weight:600}
+.ktab button[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .notes{font-size:.78rem;color:var(--muted);margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
 .notes a{color:var(--accent)}
 @media (max-width:380px){.field{grid-template-columns:minmax(0,1fr) 8.4rem}.board .verdict{font-size:1.4rem}}
@@ -163,7 +171,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
   <section class="card" id="panel-out" role="tabpanel" aria-labelledby="tab-out" hidden>
     <h2>바꿀 낍과 라오스 환전소 환율</h2>
-    <p class="sub">환전소 게시판의 Selling(매도) 숫자를 넣으세요. 받은 달러·바트는 한국 환전소에서 원화로 바꾸는 값으로 비교합니다.</p>
+    <p class="sub">환전소 게시판의 Selling(매도) 숫자를 넣으세요. 받은 달러·바트는 아래에서 고른 한국 환율로 원화 환산해 비교합니다.</p>
     <div class="field">
       <label for="kip">바꿀 낍 금액<small>남은 낍 전체를 넣으세요</small></label>
       <div class="inbox"><input id="kip" inputmode="decimal" autocomplete="off"><span>낍</span></div>
@@ -188,16 +196,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
   <section class="card" id="panel-kr" hidden>
     <h2>한국 환전소 환율</h2>
-    <p class="sub">네이버에 나오는 하나은행 고시 환율의 현찰 팔 때 값입니다. 한국에 돌아와 달러·바트를 원화로 바꿀 때 받는 금액입니다.</p>
-    <div class="field">
-      <label for="krSellUsd">달러 → 원화<small>1달러 팔면 받는 원화</small></label>
-      <div class="inbox"><input id="krSellUsd" inputmode="decimal" autocomplete="off"><span>원</span></div>
+    <p class="sub">네이버에 나오는 하나은행 고시 환율입니다. 비교에 쓸 환율을 고르세요. 기본은 매매기준율이고, 한국에서 달러·바트를 원화로 바꾼다면 현찰 팔 때가 실제 받는 금액입니다.</p>
+    <div class="ktab" role="radiogroup" aria-label="비교에 쓸 한국 환율 종류">
+      <div class="khead" aria-hidden="true"><span>구분</span><span>1달러</span><span>1바트</span></div>
+      <button type="button" role="radio" data-kind="buy"><span>현찰 살 때</span><span class="num" id="kr-buy-USD"></span><span class="num" id="kr-buy-THB"></span></button>
+      <button type="button" role="radio" data-kind="sell"><span>현찰 팔 때</span><span class="num" id="kr-sell-USD"></span><span class="num" id="kr-sell-THB"></span></button>
+      <button type="button" role="radio" data-kind="send"><span>송금 보낼 때</span><span class="num" id="kr-send-USD"></span><span class="num" id="kr-send-THB"></span></button>
+      <button type="button" role="radio" data-kind="receive"><span>송금 받을 때</span><span class="num" id="kr-receive-USD"></span><span class="num" id="kr-receive-THB"></span></button>
+      <button type="button" role="radio" data-kind="standardUnit"><span>매매기준율</span><span class="num" id="kr-standardUnit-USD"></span><span class="num" id="kr-standardUnit-THB"></span></button>
     </div>
     <div class="field">
-      <label for="krSellThb">바트 → 원화<small>1바트 팔면 받는 원화</small></label>
-      <div class="inbox"><input id="krSellThb" inputmode="decimal" autocomplete="off"><span>원</span></div>
+      <label for="krUsd">달러 → 원화<small id="krUsd-sub">선택한 환율, 직접 고칠 수 있음</small></label>
+      <div class="inbox"><input id="krUsd" inputmode="decimal" autocomplete="off"><span>원</span></div>
     </div>
-    <p class="same" id="kr-std"></p>
+    <div class="field">
+      <label for="krThb">바트 → 원화<small id="krThb-sub">선택한 환율, 직접 고칠 수 있음</small></label>
+      <div class="inbox"><input id="krThb" inputmode="decimal" autocomplete="off"><span>원</span></div>
+    </div>
     <button class="btn" id="krFetchBtn" type="button">네이버 환율 가져오기</button>
     <p class="status" id="kr-status"></p>
   </section>
@@ -229,7 +244,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   <ul class="notes">
     <li>환전소 환율은 자동으로 가져오지 않습니다. 기본값은 2026-11-03 라오스 BCEL 은행 게시 환율로, 외화 → 낍은 매입가, 낍 → 외화는 매도가입니다. 현지 게시판 숫자로 바꿔 넣으세요.</li>
     <li>환전소에 따라 원화나 바트를 팔지 않을 수 있습니다.</li>
-    <li>라오스(KIP) → 외화 화면은 낍을 달러·원화·바트로 바꾼 뒤, 달러·바트를 한국 환전소에서 원화로 다시 바꿨을 때 손에 남는 원화로 비교합니다. 한국 환전소 환율은 네이버의 하나은행 고시 현찰 팔 때 값을 하루 한 번 가져오며, 은행 우대율이나 사설 환전소에 따라 다를 수 있습니다.</li>
+    <li>라오스(KIP) → 외화 화면은 낍을 달러·원화·바트로 바꾼 뒤, 달러·바트를 고른 한국 환율로 원화 환산해 비교합니다. 한국 환전소 환율은 네이버의 하나은행 고시 환율(현찰 살 때·팔 때, 송금 보낼 때·받을 때, 매매기준율)을 하루 한 번 가져오며, 고른 종류로 계산합니다. 은행 우대율이나 사설 환전소에 따라 다를 수 있습니다.</li>
     <li>네이버와 하나은행은 낍 환율을 고시하지 않아, 낍을 한국에 가져가 바로 원화로 바꾸는 경우는 비교하지 않습니다.</li>
     <li>달러는 100달러권 신권이 가장 좋은 환율을 받고, 소액권·구권은 낮게 쳐줄 수 있습니다.</li>
     <li>입력한 값과 선택한 나라는 이 기기의 브라우저에 자동 저장되어, 다시 열면 그대로 나옵니다. 다른 기기와는 공유되지 않습니다.</li>
@@ -247,15 +262,24 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     krwUsd:1344.13, thbUsd:33.74, lakUsd:22353.30, marketDate:"2026-11-03", marketSrc:"기본값",
     usdLak:22291, krwLak:16.26, thbLak:666.83,
     kip:1000000, lakPerUsd:22631, lakPerKrw:16.9, lakPerThb:680.09, fetchedOn:"",
-    krSellUsd:1315.67, krSellThb:37.43, krStdUsd:1339.10, krStdThb:39.81, krDate:"2026-11-04", krSrc:"기본값", krFetchedOn:""
+    // 한국 환율: 네이버(하나은행 고시) 다섯 종류, 2026-11-04 20:5x 조회값. krKind = 비교에 쓸 종류
+    krKind:"standardUnit",
+    krRates:{ buy:{USD:1362.94, THB:41.77}, sell:{USD:1315.87, THB:37.41}, send:{USD:1352.40, THB:40.18}, receive:{USD:1326.20, THB:39.40}, standardUnit:{USD:1339.50, THB:39.79} },
+    krDate:"2026-11-04", krSrc:"기본값", krFetchedOn:""
   };
-  var FIELDS = ["amount","krwUsd","thbUsd","lakUsd","usdLak","krwLak","thbLak","kip","lakPerUsd","lakPerKrw","lakPerThb","krSellUsd","krSellThb"];
+  var KR_KINDS = ["buy","sell","send","receive","standardUnit"];
+  var KR_NAMES = {buy:"현찰 살 때", sell:"현찰 팔 때", send:"송금 보낼 때", receive:"송금 받을 때", standardUnit:"매매기준율"};
+  var FIELDS = ["amount","krwUsd","thbUsd","lakUsd","usdLak","krwLak","thbLak","kip","lakPerUsd","lakPerKrw","lakPerThb"];
   var S = load();
 
+  function clone(v){ return (v && typeof v === "object") ? JSON.parse(JSON.stringify(v)) : v; }
   function load(){
     var s = {}, k;
-    for (k in DEFAULTS) s[k] = DEFAULTS[k];
+    for (k in DEFAULTS) s[k] = clone(DEFAULTS[k]);
     try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); for (k in o) if (k in DEFAULTS) s[k] = o[k]; } } catch(e) {}
+    if (KR_KINDS.indexOf(s.krKind) < 0) s.krKind = "standardUnit";
+    if (!s.krRates || typeof s.krRates !== "object") s.krRates = clone(DEFAULTS.krRates);
+    KR_KINDS.forEach(function(kd){ if (!s.krRates[kd]) s.krRates[kd] = clone(DEFAULTS.krRates[kd]); });
     return s;
   }
   function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
@@ -271,9 +295,30 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     el.addEventListener("input", function(){
       S[k] = el.value;
       if (k==="krwUsd"||k==="thbUsd"||k==="lakUsd") { S.marketSrc = "직접 입력"; showMarketStatus(); }
-      if (k==="krSellUsd"||k==="krSellThb") { S.krSrc = "직접 입력"; showKrStatus(); }
       save(); render();
     });
+  });
+  // 선택한 종류의 한국 환율 칸: 고치면 그 종류의 값만 바뀌고, 다시 열어도 자동으로 덮어쓰지 않는다
+  [["krUsd","USD"],["krThb","THB"]].forEach(function(p){
+    $(p[0]).addEventListener("input", function(){
+      S.krRates[S.krKind][p[1]] = $(p[0]).value; S.krSrc = "직접 입력";
+      save(); showKrStatus(); renderKr(); render();
+    });
+  });
+  function renderKr(){
+    KR_KINDS.forEach(function(kd){
+      var r = S.krRates[kd];
+      $("kr-"+kd+"-USD").textContent = f(num(r.USD),2); $("kr-"+kd+"-THB").textContent = f(num(r.THB),2);
+    });
+    [].forEach.call(document.querySelectorAll(".ktab button"), function(b){ b.setAttribute("aria-checked", String(b.getAttribute("data-kind") === S.krKind)); });
+    var cur = S.krRates[S.krKind], nm = KR_NAMES[S.krKind];
+    if (document.activeElement !== $("krUsd")) $("krUsd").value = String(cur.USD);
+    if (document.activeElement !== $("krThb")) $("krThb").value = String(cur.THB);
+    $("krUsd-sub").textContent = nm + " 1달러 = ?원, 직접 고칠 수 있음";
+    $("krThb-sub").textContent = nm + " 1바트 = ?원, 직접 고칠 수 있음";
+  }
+  [].forEach.call(document.querySelectorAll(".ktab button"), function(b){
+    b.addEventListener("click", function(){ S.krKind = b.getAttribute("data-kind"); save(); renderKr(); render(); });
   });
   function setTab(t){
     S.tab = t; save();
@@ -328,17 +373,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     var kip=num(S.kip), pU=num(S.lakPerUsd), pK=num(S.lakPerKrw), pT=num(S.lakPerThb);
     imp("la-imp-usd", usdLak/krwLak, krwUsd, "기준 환율", "원화를 후하게 쳐주니 원화가 유리합니다.", "원화를 박하게 쳐주니 달러가 유리합니다.");
     imp("la-imp-thb", thbLak/krwLak, thbRef, "기준 바트 환율", "원화를 후하게 쳐주니 원화가 유리합니다.", "원화를 박하게 쳐주니 바트가 유리합니다.");
-    var sU = num(S.krSellUsd), sT = num(S.krSellThb);
-    imp("out-imp-usd", pU/pK, sU, "한국 현찰 팔 때", "한국에서 되팔면 남으니 달러로 바꾸는 쪽이 유리합니다.", "한국에서 되팔면 손해라 원화로 바꾸는 쪽이 유리합니다.");
-    imp("out-imp-thb", pT/pK, sT, "한국 현찰 팔 때", "한국에서 되팔면 남으니 바트로 바꾸는 쪽이 유리합니다.", "한국에서 되팔면 손해라 원화로 바꾸는 쪽이 유리합니다.");
-    var std = $("kr-std"); std.textContent = "";
-    if (ok(num(S.krStdUsd), num(S.krStdThb))) {
-      std.appendChild(document.createTextNode("참고 매매기준율: 1달러 "));
-      var b1 = document.createElement("b"); b1.className = "num"; b1.textContent = f(num(S.krStdUsd),2) + "원"; std.appendChild(b1);
-      std.appendChild(document.createTextNode(" · 1바트 "));
-      var b2 = document.createElement("b"); b2.className = "num"; b2.textContent = f(num(S.krStdThb),2) + "원"; std.appendChild(b2);
-      std.appendChild(document.createTextNode(". 팔 때는 이보다 낮게 쳐줍니다."));
-    }
+    var krName = KR_NAMES[S.krKind], sU = num(S.krRates[S.krKind].USD), sT = num(S.krRates[S.krKind].THB);
+    imp("out-imp-usd", pU/pK, sU, "한국 " + krName, "달러로 바꾸는 쪽이 유리합니다.", "원화로 바꾸는 쪽이 유리합니다.");
+    imp("out-imp-thb", pT/pK, sT, "한국 " + krName, "바트로 바꾸는 쪽이 유리합니다.", "원화로 바꾸는 쪽이 유리합니다.");
 
     if (S.tab === "la") {
       $("b-eyebrow").textContent = "라오스 환전소에서 낍으로 바꿀 때";
@@ -357,9 +394,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       else verdict(c[best].n, others.map(function(o){ return o.n+"보다 "+pct(c[best].v,o.v); }).join(", ") + " 더 받아요");
       c.forEach(function(o,i){ rows.appendChild(row(o.n, o.give, o.sub, o.v, "낍", i===best ? "가장 많이" : "−"+((1-o.v/c[best].v)*100).toFixed(1)+"%", i===best)); });
     } else {
-      $("b-eyebrow").textContent = "라오스에서 낍을 바꾸고 한국 환전소에서 원화로 받을 때";
+      $("b-eyebrow").textContent = "라오스에서 낍을 바꿀 때 · 한국 " + krName + " 기준 원화로 비교";
       if (!ok(kip, pU, pK, pT, sU, sT)) { plain("환율과 낍 금액을 입력하세요", "라오스 환전소 환율과 한국 환전소 환율이 모두 필요합니다."); return; }
-      // 각 선택의 최종 원화: 라오스에서 받은 외화 × 한국 현찰 팔 때 (원화는 그대로)
+      // 각 선택의 원화 가치: 라오스에서 받은 외화 × 고른 한국 환율 (원화는 그대로)
       var w = [
         {n:"달러", got:kip/pU, unit:"달러", d:2, sub:"라오스 1달러 = "+f(pU)+"낍 · 한국 1달러 = "+f(sU,2)+"원", won:kip/pU*sU, p:pU, v:sU, pd:0, kd:2},
         {n:"원화", got:kip/pK, unit:"원", d:0, sub:"라오스 1원 = "+f(pK,2)+"낍 · 한국에서 바꿀 필요 없음", won:kip/pK, p:pK, v:1, pd:2},
@@ -368,13 +405,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       var wb = 0; w.forEach(function(o,i){ if (Math.round(o.won - w[wb].won) > 0) wb = i; });
       var wo = w.filter(function(_,i){ return i!==wb; });
       var near = function(o){ return Math.abs(w[wb].won/o.won-1) < 0.0005; };
-      if (wo.every(near)) plain("어느 화폐든 거의 같아요", "한국에서 받는 원화 차이가 0.05% 미만입니다.");
+      if (wo.every(near)) plain("어느 화폐든 거의 같아요", "한국 " + krName + " 기준 원화 차이가 0.05% 미만입니다.");
       else {
         var diff = wo.filter(function(o){ return !near(o); }), same = wo.filter(near);
-        var why = "한국에서 원화로 받으면 " + diff.map(function(o){ return o.n+"보다 "+f(w[wb].won-o.won)+"원("+pct(w[wb].won,o.won)+")"; }).join(", ") + " 더 많아요"
+        var why = "한국 " + krName + " 기준으로 " + diff.map(function(o){ return o.n+"보다 "+f(w[wb].won-o.won)+"원("+pct(w[wb].won,o.won)+")"; }).join(", ") + " 더 많아요"
           + (same.length ? ". " + same.map(function(o){ return o.n; }).join(", ") + "와는 거의 같아요" : "");
         verdict(w[wb].n, why);
-        // 다른 선택이 1등과 같아지는 환율: 라오스 매도가(이하) 또는 한국 현찰 팔 때(이상)
+        // 다른 선택이 1등과 같아지는 환율: 라오스 매도가(이하) 또는 고른 한국 환율(이상)
         var par = $("b-parity");
         diff.forEach(function(o){
           var line = document.createElement("div"), b = document.createElement("b"); b.className = "num";
@@ -426,7 +463,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   }
   $("fetchBtn").addEventListener("click", function(){ fetchMarket(true); });
 
-  // 한국 환전소: 네이버 환율 계산기(하나은행 고시). sell = 현찰 팔 때, standardUnit = 매매기준율
+  // 한국 환율: 네이버 환율 계산기(하나은행 고시). buy/sell = 현찰 살 때/팔 때, send/receive = 송금 보낼 때/받을 때, standardUnit = 매매기준율
   function showKrStatus(msg, cls){
     var st = $("kr-status"); st.className = "status" + (cls ? " "+cls : "");
     st.textContent = msg || ("현재 값: " + S.krSrc + (S.krSrc === "직접 입력" ? ". 다시 열어도 자동으로 바꾸지 않습니다." : " · " + S.krDate));
@@ -440,14 +477,16 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   function fetchKr(manual){
     var btn = $("krFetchBtn"); krBusy = true; btn.disabled = true; btn.textContent = "가져오는 중…";
     var timeout = new Promise(function(_, rej){ setTimeout(function(){ rej(new Error("timeout")); }, 10000); });
-    Promise.race([Promise.all([naver("USD","sell"), naver("THB","sell"), naver("USD","standardUnit"), naver("THB","standardUnit")]), timeout])
+    var jobs = [];
+    KR_KINDS.forEach(function(kd){ jobs.push(naver("USD", kd), naver("THB", kd)); });
+    Promise.race([Promise.all(jobs), timeout])
       .then(function(v){
-        S.krSellUsd = v[0]; S.krSellThb = v[1]; S.krStdUsd = v[2]; S.krStdThb = v[3];
+        KR_KINDS.forEach(function(kd, i){ S.krRates[kd] = {USD:v[2*i], THB:v[2*i+1]}; });
         var now = new Date(Date.now()+9*3600e3).toISOString();
         S.krDate = now.slice(0,10) + " " + now.slice(11,16) + " 조회"; S.krSrc = "네이버 · 하나은행"; S.krFetchedOn = today();
-        ["krSellUsd","krSellThb"].forEach(function(k){ $(k).value = String(S[k]); });
-        save(); render();
-        showKrStatus("가져왔습니다: 현찰 팔 때 1달러 = " + f(v[0],2) + "원 · 1바트 = " + f(v[1],2) + "원, " + S.krDate, "ok");
+        save(); renderKr(); render();
+        var c = S.krRates[S.krKind];
+        showKrStatus("가져왔습니다: " + KR_NAMES[S.krKind] + " 1달러 = " + f(num(c.USD),2) + "원 · 1바트 = " + f(num(c.THB),2) + "원, " + S.krDate, "ok");
       })
       .catch(function(){
         if (manual) showKrStatus("네이버 환율을 가져오지 못했습니다. 인터넷 연결을 확인하거나 위 칸에 직접 입력하세요.", "err");
@@ -459,14 +498,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
   $("resetBtn").addEventListener("click", function(){
     var tab = S.tab, k;
-    for (k in DEFAULTS) S[k] = DEFAULTS[k];
+    for (k in DEFAULTS) S[k] = clone(DEFAULTS[k]);
     S.tab = tab;
     FIELDS.forEach(function(k){ $(k).value = String(S[k]); });
-    save(); render(); showMarketStatus("기본값으로 되돌렸습니다.", "ok"); showKrStatus("기본값으로 되돌렸습니다.", "ok");
+    save(); renderKr(); render(); showMarketStatus("기본값으로 되돌렸습니다.", "ok"); showKrStatus("기본값으로 되돌렸습니다.", "ok");
   });
 
   $("booth-date").textContent = "환전소 기본값: 2026-11-03";
-  showMarketStatus(); showKrStatus();
+  showMarketStatus(); showKrStatus(); renderKr();
   setTab(S.tab === "out" ? "out" : "la");
   // 직접 입력한 시장 환율은 다시 열어도 그대로 두고, 그 외에는 하루 한 번 새 환율을 가져온다
   if (S.marketSrc !== "직접 입력" && S.fetchedOn !== today() && navigator.onLine !== false) fetchMarket(false);
