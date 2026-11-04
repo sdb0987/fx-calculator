@@ -40,7 +40,7 @@
   --board:#0A1117; --board-line:#22303D; --board-ink:#E9EEF3; --board-muted:#8EA2B4; --amber:#F2BE4A;
   --good:#53C58E; --bad:#E08A66; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 32px}
 .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 h1{font-size:1.35rem;line-height:1.3;margin:0;font-weight:700;text-wrap:balance;letter-spacing:-0.01em}
@@ -186,6 +186,20 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     </div>
   </section>
 
+  <section class="card" id="panel-kr" hidden>
+    <h2>바꿀 낍과 한국 환전소 환율</h2>
+    <p class="sub">남은 낍을 한국에 가져가 환전소에서 원화로 바꿀 때입니다. 환전소가 낍을 사 주는 숫자를 넣으세요. 비워 두면 비교에서 빠집니다.</p>
+    <p class="same">바꿀 낍: <b class="num" id="kr-kip"></b>, 위 칸과 같은 금액</p>
+    <div class="field">
+      <label for="krwPer10kKip">낍 → 원화<small>1만 낍 주면 받는 원화</small></label>
+      <div class="inbox"><input id="krwPer10kKip" inputmode="decimal" autocomplete="off" placeholder="예: 450"><span>원</span></div>
+    </div>
+    <div class="implied">
+      <div class="imp"><div class="k">시장 환율 기준 1만 낍</div><div class="v num" id="kr-market"></div><div class="t" id="kr-market-t"></div></div>
+      <div class="imp"><div class="k">라오스에서 바꾸는 것만큼 되려면 1만 낍에 최소</div><div class="v num" id="kr-need"></div><div class="t" id="kr-need-t"></div></div>
+    </div>
+  </section>
+
   <section class="card">
     <h2>기준 시장 환율</h2>
     <p class="sub">1달러 기준입니다. 같은 가치를 계산하거나 받는 외화를 원화로 환산할 때 씁니다.</p>
@@ -213,6 +227,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   <ul class="notes">
     <li>환전소 환율은 자동으로 가져오지 않습니다. 기본값은 2026-11-03 라오스 BCEL 은행 게시 환율로, 외화 → 낍은 매입가, 낍 → 외화는 매도가입니다. 현지 게시판 숫자로 바꿔 넣으세요.</li>
     <li>환전소에 따라 원화나 바트를 팔지 않을 수 있습니다.</li>
+    <li>한국에서는 낍을 사 주는 환전소가 드뭅니다. 한국 환전소 환율은 직접 확인해 넣으세요.</li>
     <li>달러는 100달러권 신권이 가장 좋은 환율을 받고, 소액권·구권은 낮게 쳐줄 수 있습니다.</li>
     <li>입력한 값과 선택한 나라는 이 기기의 브라우저에 자동 저장되어, 다시 열면 그대로 나옵니다. 다른 기기와는 공유되지 않습니다.</li>
     <li>시장 환율: <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a>, 하루 1회 갱신</li>
@@ -227,9 +242,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     tab:"la", amount:100,
     krwUsd:1344.13, thbUsd:33.74, lakUsd:22353.30, marketDate:"2026-11-03", marketSrc:"기본값",
     usdLak:22291, krwLak:16.26, thbLak:666.83,
-    kip:1000000, lakPerUsd:22631, lakPerKrw:16.9, lakPerThb:680.09, fetchedOn:""
+    kip:1000000, lakPerUsd:22631, lakPerKrw:16.9, lakPerThb:680.09, krwPer10kKip:"", fetchedOn:""
   };
-  var FIELDS = ["amount","krwUsd","thbUsd","lakUsd","usdLak","krwLak","thbLak","kip","lakPerUsd","lakPerKrw","lakPerThb"];
+  var FIELDS = ["amount","krwUsd","thbUsd","lakUsd","usdLak","krwLak","thbLak","kip","lakPerUsd","lakPerKrw","lakPerThb","krwPer10kKip"];
   var S = load();
 
   function load(){
@@ -257,7 +272,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   function setTab(t){
     S.tab = t; save();
     $("tab-la").setAttribute("aria-selected", String(t==="la")); $("tab-out").setAttribute("aria-selected", String(t==="out"));
-    $("panel-la").hidden = t!=="la"; $("panel-out").hidden = t!=="out"; $("amount-card").hidden = t!=="la";
+    $("panel-la").hidden = t!=="la"; $("panel-out").hidden = t!=="out"; $("panel-kr").hidden = t!=="out"; $("amount-card").hidden = t!=="la";
     render();
   }
   $("tab-la").addEventListener("click", function(){ setTab("la"); });
@@ -271,10 +286,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     var c = document.createElement("span"); c.className = "chip"; c.textContent = chip;
     li.appendChild(g); li.appendChild(v); li.appendChild(c); return li;
   }
-  function verdict(name, why){
+  function verdict(name, why, tail){
     var v = $("b-verdict"); v.textContent = "";
     var b = document.createElement("b"); b.textContent = name; v.appendChild(b);
-    v.appendChild(document.createTextNode("로 바꾸세요"));
+    v.appendChild(document.createTextNode(tail || "로 바꾸세요"));
     $("b-why").textContent = why;
   }
   function plain(text, why){ $("b-verdict").textContent = text; $("b-why").textContent = why || ""; }
@@ -326,34 +341,70 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       else verdict(c[best].n, others.map(function(o){ return o.n+"보다 "+pct(c[best].v,o.v); }).join(", ") + " 더 받아요");
       c.forEach(function(o,i){ rows.appendChild(row(o.n, o.give, o.sub, o.v, "낍", i===best ? "가장 많이" : "−"+((1-o.v/c[best].v)*100).toFixed(1)+"%", i===best)); });
     } else {
-      $("b-eyebrow").textContent = "라오스 환전소에서 낍을 외화로 바꿀 때";
-      if (!ok(kip, krwUsd, thbUsd, pU, pK, pT)) { plain("환율과 낍 금액을 입력하세요"); return; }
+      var kr = num(S.krwPer10kKip), hasKr = ok(kr);
+      $("b-eyebrow").textContent = hasKr ? "남은 낍을 바꿀 때 · 라오스 환전소와 한국 환전소" : "라오스 환전소에서 낍을 외화로 바꿀 때";
+      // 한국 환전소 카드: 시장 기준값과, 라오스 최선과 같아지는 1만 낍당 원화
+      $("kr-kip").textContent = ok(kip) ? f(kip) + "낍" : "–";
+      var mkt10k = 10000 / num(S.lakUsd) * krwUsd, km = $("kr-market-t");
+      km.className = "t";
+      $("kr-market").textContent = ok(mkt10k) ? f(mkt10k) + "원" : "–";
+      if (ok(mkt10k) && hasKr) {
+        var gap = kr / mkt10k - 1;
+        km.textContent = "한국 환전소는 시장 환율보다 " + Math.abs(gap*100).toFixed(1) + "% " + (gap < 0 ? "낮게" : "높게") + " 쳐줍니다.";
+        km.classList.add(gap < 0 ? "bad" : "good");
+      } else km.textContent = ok(mkt10k) ? "기준 시장 환율로 계산한 값입니다." : "기준 시장 환율을 입력하세요.";
+      var need = $("kr-need"), needT = $("kr-need-t");
+      needT.className = "t";
+      if (!ok(kip, krwUsd, thbUsd, pU, pK, pT)) {
+        need.textContent = "–"; needT.textContent = "라오스 환전소 환율과 낍 금액을 입력하면 계산합니다.";
+        plain("환율과 낍 금액을 입력하세요"); return;
+      }
       var w = [
         {n:"달러", got:kip/pU, unit:"달러", d:2, sub:"1달러 = "+f(pU)+"낍", won:kip/pU*krwUsd, p:pU, v:krwUsd, pd:0},
         {n:"원화", got:kip/pK, unit:"원", d:0, sub:"1원 = "+f(pK,2)+"낍", won:kip/pK, p:pK, v:1, pd:2},
         {n:"바트", got:kip/pT, unit:"바트", d:2, sub:"1바트 = "+f(pT,2)+"낍", won:kip/pT*thbRef, p:pT, v:thbRef, pd:2}
       ];
-      var wb;
-      if (Math.round(w[0].won - Math.max(w[1].won,w[2].won)) >= 0) wb = 0;
-      else if (Math.round(w[1].won - Math.max(w[0].won,w[2].won)) >= 0) wb = 1;
-      else wb = 2;
+      // 라오스 안에서 가장 좋은 선택 (동점이면 앞쪽)
+      var lb = 0; w.forEach(function(o,i){ if (Math.round(o.won - w[lb].won) > 0) lb = i; });
+      var needV = w[lb].won / kip * 10000;
+      need.textContent = f(needV) + "원";
+      var laTxt = "라오스에서 " + w[lb].n + "로 바꾸면 1만 낍에 " + f(needV) + "원어치";
+      if (hasKr) {
+        var dk = Math.round(kr - needV);
+        needT.textContent = laTxt + ". 지금 " + f(kr) + "원이라 " + (dk > 0 ? "한국에서 바꾸는 쪽이 유리합니다." : dk < 0 ? "라오스에서 바꾸는 쪽이 유리합니다." : "차이가 없습니다.");
+        if (dk) needT.classList.add(dk > 0 ? "good" : "bad");
+        w.push({n:"한국 환전소", got:kip*kr/10000, unit:"원", d:0, sub:"한국에서 1만 낍 = "+f(kr)+"원", won:kip*kr/10000, p:kr, kr:true});
+      } else needT.textContent = laTxt + "입니다.";
+
+      var wb = 0; w.forEach(function(o,i){ if (Math.round(o.won - w[wb].won) > 0) wb = i; });
       var wo = w.filter(function(_,i){ return i!==wb; });
-      if (wo.every(function(o){ return Math.abs(w[wb].won/o.won-1) < 0.0005; })) plain("어느 화폐든 거의 같아요", "차이가 0.05% 미만입니다.");
+      if (wo.every(function(o){ return Math.abs(w[wb].won/o.won-1) < 0.0005; })) plain("어느 쪽이든 거의 같아요", "차이가 0.05% 미만입니다.");
       else {
-        verdict(w[wb].n, wo.map(function(o){ return o.n+"보다 "+pct(w[wb].won,o.won); }).join(", ") + " 더 가치 있어요");
-        // 다른 화폐가 1등과 같은 가치가 되는 환전소 매도가: kip/p × v = 1등의 원화 환산액
+        var near = function(o){ return Math.abs(w[wb].won/o.won-1) < 0.0005; };
+        var diff = wo.filter(function(o){ return !near(o); }), same = wo.filter(near);
+        var why = diff.map(function(o){ return o.n+"보다 "+pct(w[wb].won,o.won); }).join(", ") + " 더 가치 있어요"
+          + (same.length ? ". " + same.map(function(o){ return o.n; }).join(", ") + "와는 거의 같아요" : "");
+        if (w[wb].kr) verdict("한국", why, "에서 원화로 바꾸세요"); else verdict(w[wb].n, why);
+        // 다른 선택이 1등과 같은 가치가 되는 환율: 라오스는 낍 매도가(이하), 한국은 1만 낍당 원화(이상)
         var par = $("b-parity");
         wo.forEach(function(o){
-          var pStar = kip * o.v / w[wb].won;
-          var line = document.createElement("div");
-          line.appendChild(document.createTextNode(o.n + "가 " + w[wb].n + "만큼 되려면 1" + o.unit + " = "));
-          var b = document.createElement("b"); b.className = "num"; b.textContent = f(pStar, o.pd) + "낍";
-          line.appendChild(b);
-          line.appendChild(document.createTextNode(" 이하. 지금은 " + f(o.p, o.pd) + "낍"));
+          var line = document.createElement("div"), b = document.createElement("b"); b.className = "num";
+          if (o.kr) {
+            line.appendChild(document.createTextNode(o.n + "가 " + w[wb].n + "만큼 되려면 1만 낍 = "));
+            b.textContent = f(w[wb].won / kip * 10000) + "원"; line.appendChild(b);
+            line.appendChild(document.createTextNode(" 이상. 지금은 " + f(o.p) + "원"));
+          } else {
+            line.appendChild(document.createTextNode(o.n + "가 " + w[wb].n + "만큼 되려면 1" + o.unit + " = "));
+            b.textContent = f(kip * o.v / w[wb].won, o.pd) + "낍"; line.appendChild(b);
+            line.appendChild(document.createTextNode(" 이하. 지금은 " + f(o.p, o.pd) + "낍"));
+          }
           par.appendChild(line);
         });
       }
-      w.forEach(function(o,i){ rows.appendChild(row(o.n, f(o.got,o.d)+o.unit, o.sub, o.won, "원어치", i===wb ? "가장 많이" : "−"+((1-o.won/w[wb].won)*100).toFixed(1)+"%", i===wb)); });
+      w.forEach(function(o,i){
+        var gapPct = (1-o.won/w[wb].won)*100;
+        rows.appendChild(row(o.n, f(o.got,o.d)+o.unit, o.sub, o.won, "원어치", i===wb ? "가장 많이" : (gapPct < 0.05 ? "거의 같음" : "−"+gapPct.toFixed(1)+"%"), i===wb));
+      });
     }
   }
 
