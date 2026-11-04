@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <!--host-->
 <meta name="theme-color" content="#13202C">
-<meta name="description" content="라오스와 태국 환전소에서 달러·원화·바트 중 무엇을 내야 현지 돈을 더 받는지 비교합니다.">
+<meta name="description" content="라오스 환전소에서 외화를 낍으로, 낍을 외화로 바꿀 때 달러·원화·바트 중 무엇이 유리한지 비교합니다.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -111,12 +111,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 <div class="wrap">
   <header class="top">
     <h1>라오스(KIP) ↔ 외화 환전 계산기</h1>
-    <p>달러·원화·바트를 들고 갔을 때, 환전소에 무엇을 내야 현지 돈을 더 받는지 알려 줍니다.</p>
+    <p>외화를 낍으로 바꿀 때와 남은 낍을 외화로 바꿀 때, 달러·원화·바트 중 무엇이 유리한지 알려 줍니다.</p>
   </header>
 
-  <div class="tabs" role="tablist" aria-label="나라 선택">
+  <div class="tabs" role="tablist" aria-label="환전 방향 선택">
     <button id="tab-la" type="button" role="tab" aria-selected="true" aria-controls="panel-la">외화 → 라오스(KIP)</button>
-    <button id="tab-th" type="button" role="tab" aria-selected="false" aria-controls="panel-th">라오스(KIP) → 외화</button>
+    <button id="tab-out" type="button" role="tab" aria-selected="false" aria-controls="panel-out">라오스(KIP) → 외화</button>
   </div>
 
   <section class="board" aria-live="polite">
@@ -126,7 +126,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <ul class="rows" id="b-rows"></ul>
   </section>
 
-  <section class="card">
+  <section class="card" id="amount-card">
     <h2>비교할 금액</h2>
     <p class="sub">같은 가치의 돈을 각각 냈을 때 받는 현지 돈을 비교합니다.</p>
     <div class="field">
@@ -157,31 +157,34 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     </div>
   </section>
 
-  <section class="card" id="panel-th" role="tabpanel" aria-labelledby="tab-th" hidden>
-    <h2>태국 환전소 환율</h2>
-    <p class="sub">환전소 게시판의 Buying(매입) 숫자를 넣으세요.</p>
+  <section class="card" id="panel-out" role="tabpanel" aria-labelledby="tab-out" hidden>
+    <h2>바꿀 낍과 라오스 환전소 환율</h2>
+    <p class="sub">환전소 게시판의 Selling(매도) 숫자를 넣으세요. 받는 외화는 기준 시장 환율로 원화 환산해 비교합니다.</p>
     <div class="field">
-      <label for="usdThb">달러 → 바트<small>1달러 주면 받는 바트</small></label>
-      <div class="inbox"><input id="usdThb" inputmode="decimal" autocomplete="off"><span>바트</span></div>
+      <label for="kip">바꿀 낍 금액<small>남은 낍 전체를 넣으세요</small></label>
+      <div class="inbox"><input id="kip" inputmode="decimal" autocomplete="off"><span>낍</span></div>
     </div>
     <div class="field">
-      <label for="krwPerThb">바트 → 원<small>1바트에 해당하는 원화</small></label>
-      <div class="inbox"><input id="krwPerThb" inputmode="decimal" autocomplete="off"><span>원</span></div>
+      <label for="lakPerUsd">낍 → 달러<small>1달러 받으려면 내는 낍</small></label>
+      <div class="inbox"><input id="lakPerUsd" inputmode="decimal" autocomplete="off"><span>낍</span></div>
     </div>
-    <div class="helper">
-      <label for="krwBoard">게시판에 "1원 = 0.02513바트"처럼 적혀 있으면 여기에</label>
-      <input id="krwBoard" inputmode="decimal" autocomplete="off" placeholder="0.02513">
-      <span id="krwBoard-out"></span>
+    <div class="field">
+      <label for="lakPerKrw">낍 → 원화<small>1원 받으려면 내는 낍</small></label>
+      <div class="inbox"><input id="lakPerKrw" inputmode="decimal" autocomplete="off"><span>낍</span></div>
+    </div>
+    <div class="field">
+      <label for="lakPerThb">낍 → 바트<small>1바트 받으려면 내는 낍</small></label>
+      <div class="inbox"><input id="lakPerThb" inputmode="decimal" autocomplete="off"><span>낍</span></div>
     </div>
     <div class="implied">
-      <div class="imp"><div class="k">환전소가 치는 1달러당 원화</div><div class="v num" id="th-imp-usd"></div><div class="t" id="th-imp-usd-t"></div></div>
-      <div class="imp"><div class="k">환전소가 치는 1바트당 원화</div><div class="v num" id="th-imp-thb"></div><div class="t" id="th-imp-thb-t"></div><div class="t" id="th-imp-thb-t2"></div></div>
+      <div class="imp"><div class="k">환전소가 치는 1달러당 원화</div><div class="v num" id="out-imp-usd"></div><div class="t" id="out-imp-usd-t"></div></div>
+      <div class="imp"><div class="k">환전소가 치는 1바트당 원화</div><div class="v num" id="out-imp-thb"></div><div class="t" id="out-imp-thb-t"></div></div>
     </div>
   </section>
 
   <section class="card">
     <h2>기준 시장 환율</h2>
-    <p class="sub">1달러 기준입니다. 같은 가치의 원화·바트를 계산할 때 씁니다.</p>
+    <p class="sub">1달러 기준입니다. 같은 가치를 계산하거나 받는 외화를 원화로 환산할 때 씁니다.</p>
     <div class="field">
       <label for="krwUsd">원화<small>1달러 = ?원</small></label>
       <div class="inbox"><input id="krwUsd" inputmode="decimal" autocomplete="off"><span>원</span></div>
@@ -204,7 +207,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   </div>
 
   <ul class="notes">
-    <li>환전소 환율은 자동으로 가져오지 않습니다. 기본값은 2026-11-03 라오스 BCEL 은행과 태국 Super Rich 본점 게시 환율입니다. 현지 게시판 숫자로 바꿔 넣으세요.</li>
+    <li>환전소 환율은 자동으로 가져오지 않습니다. 기본값은 2026-11-03 라오스 BCEL 은행 게시 환율로, 외화 → 낍은 매입가, 낍 → 외화는 매도가입니다. 현지 게시판 숫자로 바꿔 넣으세요.</li>
+    <li>환전소에 따라 원화나 바트를 팔지 않을 수 있습니다.</li>
     <li>달러는 100달러권 신권이 가장 좋은 환율을 받고, 소액권·구권은 낮게 쳐줄 수 있습니다.</li>
     <li>입력한 값과 선택한 나라는 이 기기의 브라우저에 자동 저장되어, 다시 열면 그대로 나옵니다. 다른 기기와는 공유되지 않습니다.</li>
     <li>시장 환율: <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a>, 하루 1회 갱신</li>
@@ -218,9 +222,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   var DEFAULTS = {
     tab:"la", amount:100,
     krwUsd:1344.13, thbUsd:33.74, lakUsd:22353.30, marketDate:"2026-11-03", marketSrc:"기본값",
-    usdLak:22291, krwLak:16.26, thbLak:666.83, usdThb:33.65, krwPerThb:39.79, fetchedOn:""
+    usdLak:22291, krwLak:16.26, thbLak:666.83,
+    kip:1000000, lakPerUsd:22631, lakPerKrw:16.9, lakPerThb:680.09, fetchedOn:""
   };
-  var FIELDS = ["amount","krwUsd","thbUsd","lakUsd","usdLak","krwLak","thbLak","usdThb","krwPerThb"];
+  var FIELDS = ["amount","krwUsd","thbUsd","lakUsd","usdLak","krwLak","thbLak","kip","lakPerUsd","lakPerKrw","lakPerThb"];
   var S = load();
 
   function load(){
@@ -245,22 +250,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       save(); render();
     });
   });
-  $("krwBoard").addEventListener("input", function(){
-    var x = num(this.value);
-    if (ok(x) && x < 1) {
-      var v = Math.round(100/x)/100; S.krwPerThb = v; $("krwPerThb").value = String(v);
-      $("krwBoard-out").textContent = "→ 1바트 = " + f(v,2) + "원으로 적용"; save(); render();
-    } else $("krwBoard-out").textContent = "";
-  });
-
   function setTab(t){
     S.tab = t; save();
-    $("tab-la").setAttribute("aria-selected", String(t==="la")); $("tab-th").setAttribute("aria-selected", String(t==="th"));
-    $("panel-la").hidden = t!=="la"; $("panel-th").hidden = t!=="th";
+    $("tab-la").setAttribute("aria-selected", String(t==="la")); $("tab-out").setAttribute("aria-selected", String(t==="out"));
+    $("panel-la").hidden = t!=="la"; $("panel-out").hidden = t!=="out"; $("amount-card").hidden = t!=="la";
     render();
   }
   $("tab-la").addEventListener("click", function(){ setTab("la"); });
-  $("tab-th").addEventListener("click", function(){ setTab("th"); });
+  $("tab-out").addEventListener("click", function(){ setTab("out"); });
 
   function row(name, give, sub, get, unit, chip, best){
     var li = document.createElement("li"); if (best) li.className = "best";
@@ -283,8 +280,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     var d2 = val < 100 ? 2 : 0;
     $(id).textContent = f(val, d2) + "원";
     var d = Math.round((val-ref) * Math.pow(10, d2));
-    if (d < 0) { t.textContent = refLabel + " " + f(ref, d2) + "원보다 낮아요. 원화를 후하게 쳐주니 " + cheapMsg; t.classList.add("good"); }
-    else if (d > 0) { t.textContent = refLabel + " " + f(ref, d2) + "원보다 높아요. 원화를 박하게 쳐주니 " + dearMsg; t.classList.add("bad"); }
+    if (d < 0) { t.textContent = refLabel + " " + f(ref, d2) + "원보다 낮아요. " + cheapMsg; t.classList.add("good"); }
+    else if (d > 0) { t.textContent = refLabel + " " + f(ref, d2) + "원보다 높아요. " + dearMsg; t.classList.add("bad"); }
     else t.textContent = refLabel + " " + f(ref, d2) + "원과 같아요. 차이가 없습니다.";
   }
 
@@ -301,19 +298,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       });
     }
     var rows = $("b-rows"); rows.textContent = "";
-    var usdLak=num(S.usdLak), krwLak=num(S.krwLak), thbLak=num(S.thbLak), usdThb=num(S.usdThb), krwPerThb=num(S.krwPerThb);
-    imp("la-imp-usd", usdLak/krwLak, krwUsd, "기준 환율", "원화가 유리합니다.", "달러가 유리합니다.");
-    imp("la-imp-thb", thbLak/krwLak, thbRef, "기준 바트 환율", "원화가 유리합니다.", "바트가 유리합니다.");
-    imp("th-imp-usd", usdThb*krwPerThb, krwUsd, "기준 환율", "원화가 유리합니다.", "달러가 유리합니다.");
-    imp("th-imp-thb", krwPerThb, thbRef, "기준 바트 환율", "시장 환율보다 유리합니다.", "시장 환율보다 불리합니다.");
-    var t2 = $("th-imp-thb-t2"); t2.className = "t"; t2.textContent = "";
-    if (ok(krwPerThb, krwUsd, usdThb)) {
-      var viaUsd = krwUsd/usdThb, dd = Math.round((krwPerThb-viaUsd)*100);
-      var vTxt = "달러로 바꿔 내면 1바트에 " + f(viaUsd,2) + "원꼴";
-      if (dd < 0) { t2.textContent = vTxt + "이라 원화로 내는 쪽이 유리합니다."; t2.classList.add("good"); }
-      else if (dd > 0) { t2.textContent = vTxt + "이라 달러로 내는 쪽이 유리합니다."; t2.classList.add("bad"); }
-      else t2.textContent = vTxt + "으로 같아 차이가 없습니다.";
-    }
+    var usdLak=num(S.usdLak), krwLak=num(S.krwLak), thbLak=num(S.thbLak);
+    var kip=num(S.kip), pU=num(S.lakPerUsd), pK=num(S.lakPerKrw), pT=num(S.lakPerThb);
+    imp("la-imp-usd", usdLak/krwLak, krwUsd, "기준 환율", "원화를 후하게 쳐주니 원화가 유리합니다.", "원화를 박하게 쳐주니 달러가 유리합니다.");
+    imp("la-imp-thb", thbLak/krwLak, thbRef, "기준 바트 환율", "원화를 후하게 쳐주니 원화가 유리합니다.", "원화를 박하게 쳐주니 바트가 유리합니다.");
+    imp("out-imp-usd", pU/pK, krwUsd, "기준 환율", "달러를 싸게 파니 달러로 바꾸는 쪽이 유리합니다.", "달러를 비싸게 파니 원화로 바꾸는 쪽이 유리합니다.");
+    imp("out-imp-thb", pT/pK, thbRef, "기준 바트 환율", "바트를 싸게 파니 바트로 바꾸는 쪽이 유리합니다.", "바트를 비싸게 파니 원화로 바꾸는 쪽이 유리합니다.");
 
     if (S.tab === "la") {
       $("b-eyebrow").textContent = "라오스 환전소에서 낍으로 바꿀 때";
@@ -332,16 +322,21 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       else verdict(c[best].n, others.map(function(o){ return o.n+"보다 "+pct(c[best].v,o.v); }).join(", ") + " 더 받아요");
       c.forEach(function(o,i){ rows.appendChild(row(o.n, o.give, o.sub, o.v, "낍", i===best ? "가장 많이" : "−"+((1-o.v/c[best].v)*100).toFixed(1)+"%", i===best)); });
     } else {
-      $("b-eyebrow").textContent = "태국 환전소에서 바트로 바꿀 때";
-      if (!ok(A, krwUsd, usdThb, krwPerThb)) { plain("환율과 금액을 입력하세요"); return; }
-      var cc = [
-        {n:"달러", give:aTxt, sub:"1달러 = "+f(usdThb,2)+"바트", v:A*usdThb},
-        {n:"원화", give:f(K)+"원", sub:"1바트 = "+f(krwPerThb,2)+"원", v:K/krwPerThb}
+      $("b-eyebrow").textContent = "라오스 환전소에서 낍을 외화로 바꿀 때";
+      if (!ok(kip, krwUsd, thbUsd, pU, pK, pT)) { plain("환율과 낍 금액을 입력하세요"); return; }
+      var w = [
+        {n:"달러", got:kip/pU, unit:"달러", d:2, sub:"1달러 = "+f(pU)+"낍", won:kip/pU*krwUsd},
+        {n:"원화", got:kip/pK, unit:"원", d:0, sub:"1원 = "+f(pK,2)+"낍", won:kip/pK},
+        {n:"바트", got:kip/pT, unit:"바트", d:2, sub:"1바트 = "+f(pT,2)+"낍", won:kip/pT*thbRef}
       ];
-      var bi = Math.round((cc[0].v-cc[1].v)*100) >= 0 ? 0 : 1, oi = 1-bi;
-      if (Math.abs(cc[bi].v/cc[oi].v-1) < 0.0005) plain("어느 쪽이든 거의 같아요", "차이가 0.05% 미만입니다.");
-      else verdict(cc[bi].n, cc[oi].n + "보다 " + pct(cc[bi].v, cc[oi].v) + " 더 받아요");
-      cc.forEach(function(o,i){ rows.appendChild(row(o.n, o.give, o.sub, o.v, "바트", i===bi ? "더 많이" : "−"+((1-o.v/cc[bi].v)*100).toFixed(1)+"%", i===bi)); });
+      var wb;
+      if (Math.round(w[0].won - Math.max(w[1].won,w[2].won)) >= 0) wb = 0;
+      else if (Math.round(w[1].won - Math.max(w[0].won,w[2].won)) >= 0) wb = 1;
+      else wb = 2;
+      var wo = w.filter(function(_,i){ return i!==wb; });
+      if (wo.every(function(o){ return Math.abs(w[wb].won/o.won-1) < 0.0005; })) plain("어느 화폐든 거의 같아요", "차이가 0.05% 미만입니다.");
+      else verdict(w[wb].n, wo.map(function(o){ return o.n+"보다 "+pct(w[wb].won,o.won); }).join(", ") + " 더 가치 있어요");
+      w.forEach(function(o,i){ rows.appendChild(row(o.n, f(o.got,o.d)+o.unit, o.sub, o.won, "원어치", i===wb ? "가장 많이" : "−"+((1-o.won/w[wb].won)*100).toFixed(1)+"%", i===wb)); });
     }
   }
 
@@ -379,12 +374,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     for (k in DEFAULTS) S[k] = DEFAULTS[k];
     S.tab = tab;
     FIELDS.forEach(function(k){ $(k).value = String(S[k]); });
-    $("krwBoard").value = ""; $("krwBoard-out").textContent = "";
     save(); render(); showMarketStatus("기본값으로 되돌렸습니다.", "ok");
   });
 
   $("booth-date").textContent = "환전소 기본값: 2026-11-03";
-  setTab(S.tab === "th" ? "th" : "la");
+  setTab(S.tab === "out" ? "out" : "la");
   showMarketStatus();
   // 직접 입력한 시장 환율은 다시 열어도 그대로 두고, 그 외에는 하루 한 번 새 환율을 가져온다
   if (S.marketSrc !== "직접 입력" && S.fetchedOn !== today() && navigator.onLine !== false) fetchMarket(false);
